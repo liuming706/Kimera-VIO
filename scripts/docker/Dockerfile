@@ -1,9 +1,16 @@
-FROM ubuntu:20.04
+FROM ros:noetic
 LABEL maintainer="mabate@mit.edu"
 
 # To avoid tzdata asking for geographic location...
 ENV DEBIAN_FRONTEND=noninteractive
-
+# 替换为清华镜像（适配国内）
+RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+# 添加 ROS Noetic 源
+RUN apt-get install -y curl gnupg2 lsb-release && \
+    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list 
+    
 ENV DIRPATH /root/
 WORKDIR $DIRPATH
 
@@ -31,9 +38,10 @@ RUN apt-get update && \
       python3-tk && \
       apt-get clean && \
       rm -rf /var/lib/apt/lists/*
-
-RUN git clone https://github.com/borglab/gtsam.git && \
-      cd gtsam && \
+      
+RUN git config --global url."https://ghfast.top/https://github.com/".insteadOf "https://github.com/"
+RUN git clone https://github.com/borglab/gtsam.git 
+RUN cd gtsam && \
       git checkout 4.2 && \
       mkdir build && \
       cd build && \
@@ -82,5 +90,5 @@ RUN cd Kimera-RPGO && \
       make -j$(nproc) install
 
 # Install Kimera-VIO
-RUN git clone https://github.com/MIT-SPARK/Kimera-VIO.git
-RUN cd Kimera-VIO && mkdir build && cd build && cmake .. && make -j$(nproc)
+#RUN git clone https://github.com/MIT-SPARK/Kimera-VIO.git
+#RUN cd Kimera-VIO && mkdir build && cd build && cmake .. && make -j$(nproc)
